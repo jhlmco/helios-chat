@@ -41,7 +41,7 @@ export const useMessageStore = create<MessageState>((set, get) => ({
       
       const payload: any = {
         text,
-        modelType: settings.aiModel, // Include the model type (openai or gemini)
+        apiType: settings.aiModel, // Include the model type (openai or gemini)
       };
 
       // Add model-specific configuration
