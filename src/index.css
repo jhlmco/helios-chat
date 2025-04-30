@@ -71,3 +71,28 @@ body {
 .typing-indicator div:nth-child(3) {
   animation-delay: 0.4s;
 }
+
+/* Markdown Styles */
+.prose {
+  @apply prose-headings:text-slate-200 
+    prose-p:text-slate-200 
+    prose-a:text-blue-400 
+    prose-strong:text-slate-200 
+    prose-code:text-slate-200
+    prose-pre:bg-slate-800
+    prose-pre:text-slate-200
+    prose-ol:text-slate-200
+    prose-ul:text-slate-200;
+}
+
+.prose pre {
+  @apply p-2 rounded;
+}
+
+.prose code {
+  @apply bg-slate-800 px-1 py-0.5 rounded text-sm;
+}
+
+.prose pre code {
+  @apply bg-transparent p-0;
+}

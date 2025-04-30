@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { nanoid } from 'nanoid';
+import OpenAI from 'openai';
 import { useSettingsStore } from './settingsStore';
 import { Message } from '../types';
 
@@ -39,54 +40,76 @@ export const useMessageStore = create<MessageState>((set, get) => ({
     try {
       set({ isTyping: true });
       
-      const payload: any = {
-        text,
-        apiType: settings.aiModel, // Include the model type (openai or gemini)
-      };
-
-      // Add model-specific configuration
+      let aiResponse: string;
+      
       if (settings.aiModel === 'openai') {
-        if (!settings.openai.apiKey) {
-          throw new Error('OpenAI API key is not configured. Please check your settings.');
+        if (!settings.openai.apiKey || !settings.openai.model) {
+          throw new Error('OpenAI API key and model must be configured in settings.');
         }
-        payload.hostname = settings.openai.hostname;
-        payload.apiKey = settings.openai.apiKey;
-        payload.model = settings.openai.model;
+
+        const openai = new OpenAI({
+          apiKey: settings.openai.apiKey,
+          baseURL: settings.openai.hostname,
+        });
+
+        const completion = await openai.chat.completions.create({
+          model: settings.openai.model,
+          messages: [{ role: 'user', content: text }],
+          temperature: 0.7,
+        });
+
+        aiResponse = completion.choices[0]?.message?.content;
+        if (!aiResponse) {
+          throw new Error('Invalid response from OpenAI');
+        }
+
       } else if (settings.aiModel === 'gemini') {
-        if (!settings.gemini.apiKey) {
-          throw new Error('Gemini API key is not configured. Please check your settings.');
+        if (!settings.gemini.apiKey || !settings.gemini.model) {
+          throw new Error('Gemini API key and model must be configured in settings.');
         }
-        payload.apiKey = settings.gemini.apiKey;
-      }
 
-      // Add enabled MCP servers
-      const enabledServers = settings.mcpServers.filter(server => server.enabled);
-      if (enabledServers.length > 0) {
-        payload.mcpServers = enabledServers.map(server => ({
-          hostname: server.hostname,
-          apiKey: server.apiKey,
-        }));
-      }
+        const modelName = settings.gemini.model.startsWith('models/') 
+          ? settings.gemini.model 
+          : `models/${settings.gemini.model}`;
 
-      const response = await fetch('http://localhost:8080/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(
-          errorData?.error || 
-          `Server error: ${response.status} ${response.statusText}`
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1/${modelName}:generateContent?key=${settings.gemini.apiKey}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              contents: [{
+                parts: [{
+                  text: text
+                }]
+              }],
+              generationConfig: {
+                temperature: 0.7,
+                topK: 40,
+                topP: 0.95,
+              },
+            }),
+          }
         );
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error?.message || 'Gemini API request failed');
+        }
+
+        const data = await response.json();
+        aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!aiResponse) {
+          throw new Error('Invalid response from Gemini');
+        }
+      } else {
+        throw new Error('Invalid AI model selected');
       }
 
-      const data = await response.json();
       set({ isTyping: false });
-      get().addMessage(data.response, 'ai');
+      get().addMessage(aiResponse, 'ai');
       
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -98,8 +121,8 @@ export const useMessageStore = create<MessageState>((set, get) => ({
         if (error.message.includes('API key')) {
           errorMessage = error.message;
         } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-          errorMessage = 'Unable to reach the chat server. Please check if the server is running and try again.';
-        } else if (error.message.startsWith('Server error:')) {
+          errorMessage = 'Unable to reach the AI service. Please check your internet connection and try again.';
+        } else {
           errorMessage = error.message;
         }
       }

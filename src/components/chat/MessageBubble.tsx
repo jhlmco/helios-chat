@@ -1,6 +1,7 @@
 import React from 'react';
 import classNames from 'classnames';
 import { format } from 'date-fns';
+import { marked } from 'marked';
 import { Message } from '../../types';
 
 interface MessageBubbleProps {
@@ -25,7 +26,12 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
             : 'bg-slate-700 text-slate-200 border border-slate-600 rounded-bl-none'
         )}
       >
-        <div className="text-sm md:text-base">{message.text}</div>
+        <div 
+          className="text-sm md:text-base prose dark:prose-invert max-w-none prose-sm prose-p:my-1 prose-headings:my-2 prose-pre:my-1 prose-ul:my-1 prose-ol:my-1"
+          dangerouslySetInnerHTML={{ 
+            __html: isUser ? message.text : marked(message.text, { breaks: true }) 
+          }}
+        />
         <div
           className={classNames(
             'text-xs mt-1',

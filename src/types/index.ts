@@ -24,6 +24,8 @@ export interface Settings {
   };
   gemini: {
     apiKey: string;
+    model?: string;
+    availableModels: string[];
   };
   mcpServers: MCPServer[];
 }

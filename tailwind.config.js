@@ -66,9 +66,34 @@ export default {
           900: 'rgb(var(--color-error), 0.9)',
         },
       },
+      typography: {
+        DEFAULT: {
+          css: {
+            maxWidth: 'none',
+            color: 'inherit',
+            a: {
+              color: 'inherit',
+              textDecoration: 'underline',
+              fontWeight: '500',
+            },
+            strong: {
+              color: 'inherit',
+              fontWeight: '600',
+            },
+            code: {
+              color: 'inherit',
+            },
+            pre: {
+              color: 'inherit',
+              backgroundColor: 'transparent',
+            },
+          },
+        },
+      },
     },
   },
   plugins: [
-    require('tailwind-scrollbar')
+    require('tailwind-scrollbar'),
+    require('@tailwindcss/typography'),
   ],
 };

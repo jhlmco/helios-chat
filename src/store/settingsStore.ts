@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { nanoid } from 'nanoid';
+import OpenAI from 'openai';
 import { Settings, MCPServer } from '../types';
 
 interface SettingsState extends Settings {
@@ -8,12 +9,13 @@ interface SettingsState extends Settings {
   setTheme: (theme: 'light' | 'dark') => void;
   setAiModel: (model: 'openai' | 'gemini') => void;
   setOpenAIConfig: (config: { hostname: string; apiKey: string; model?: string }) => void;
-  setGeminiConfig: (config: { apiKey: string }) => void;
+  setGeminiConfig: (config: { apiKey: string; model?: string }) => void;
   addMCPServer: () => void;
   updateMCPServer: (id: string, config: Partial<MCPServer>) => void;
   removeMCPServer: (id: string) => void;
   loadSettings: () => void;
   refreshOpenAIModels: () => Promise<void>;
+  refreshGeminiModels: () => Promise<void>;
 }
 
 const defaultSettings: Settings = {
@@ -22,10 +24,13 @@ const defaultSettings: Settings = {
   openai: {
     hostname: 'https://api.openai.com/v1',
     apiKey: '',
+    model: '',
     availableModels: [],
   },
   gemini: {
     apiKey: '',
+    model: '',
+    availableModels: [],
   },
   mcpServers: [],
 };
@@ -50,7 +55,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   },
   
   setGeminiConfig: (config) => {
-    set({ gemini: config });
+    set((state) => ({
+      gemini: { ...state.gemini, ...config },
+    }));
   },
 
   addMCPServer: () => {
@@ -92,30 +99,58 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     }
 
     try {
-      const response = await fetch('http://localhost:8080/models', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          apiKey: state.openai.apiKey,
-          hostname: state.openai.hostname,
-        }),
+      const openai = new OpenAI({
+        apiKey: state.openai.apiKey,
+        baseURL: state.openai.hostname,
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch models');
-      }
+      const response = await openai.models.list();
+      
+      const models = response.data
+        .map(model => model.id)
+        .sort();
 
-      const data = await response.json();
       set((state) => ({
         openai: {
           ...state.openai,
-          availableModels: data.models.sort(),
+          availableModels: models,
         },
       }));
     } catch (error) {
-      console.error('Error fetching models:', error);
+      console.error('Error fetching OpenAI models:', error);
+      throw error;
+    }
+  },
+
+  refreshGeminiModels: async () => {
+    const state = get();
+    if (!state.gemini.apiKey) {
+      throw new Error('Gemini API key is required to fetch models');
+    }
+
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1/models?key=${state.gemini.apiKey}`
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch Gemini models');
+      }
+
+      const data = await response.json();
+      const models = data.models
+        .filter((model: any) => model.name.startsWith('models/gemini-'))
+        .map((model: any) => model.name.replace('models/', ''))
+        .sort();
+
+      set((state) => ({
+        gemini: {
+          ...state.gemini,
+          availableModels: models,
+        },
+      }));
+    } catch (error) {
+      console.error('Error fetching Gemini models:', error);
       throw error;
     }
   },

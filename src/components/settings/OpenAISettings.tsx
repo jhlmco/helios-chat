@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { RefreshCw } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { RefreshCw, Check } from 'lucide-react';
 import { useSettingsStore } from '../../store/settingsStore';
 
 const OpenAISettings: React.FC = () => {
@@ -11,6 +11,7 @@ const OpenAISettings: React.FC = () => {
   const [isHostnameValid, setIsHostnameValid] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [isSaved, setIsSaved] = useState(false);
   
   const validateHostname = (value: string) => {
     try {
@@ -47,6 +48,8 @@ const OpenAISettings: React.FC = () => {
         ...openai,
         hostname,
       });
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 2000);
     }
   };
 
@@ -55,6 +58,8 @@ const OpenAISettings: React.FC = () => {
       ...openai,
       apiKey,
     });
+    setIsSaved(true);
+    setTimeout(() => setIsSaved(false), 2000);
   };
 
   const handleModelChange = (value: string) => {
@@ -63,6 +68,8 @@ const OpenAISettings: React.FC = () => {
       ...openai,
       model: value,
     });
+    setIsSaved(true);
+    setTimeout(() => setIsSaved(false), 2000);
   };
   
   return (
@@ -150,6 +157,12 @@ const OpenAISettings: React.FC = () => {
           <p className="mt-1 text-sm text-slate-400">
             Select an OpenAI model to use for chat responses
           </p>
+        </div>
+      </div>
+      
+      <div className="flex justify-end mt-6">
+        <div className={`transition-colors ${isSaved ? 'text-green-500' : 'text-slate-400'}`}>
+          <Check className="w-6 h-6" />
         </div>
       </div>
     </div>
