@@ -3,13 +3,20 @@ import classNames from 'classnames';
 import { format } from 'date-fns';
 import { marked } from 'marked';
 import { Message } from '../../types';
+import { useSettingsStore } from '../../store/settingsStore';
 
 interface MessageBubbleProps {
   message: Message;
 }
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
+  const { openai, gemini } = useSettingsStore();
   const isUser = message.sender === 'user';
+  
+  const getModelName = () => {
+    if (!message.apiType) return null;
+    return message.apiType === 'openai' ? openai.model : gemini.model;
+  };
   
   return (
     <div
@@ -27,18 +34,25 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
         )}
       >
         <div 
-          className="text-sm md:text-base prose dark:prose-invert max-w-none prose-sm prose-p:my-1 prose-headings:my-2 prose-pre:my-1 prose-ul:my-1 prose-ol:my-1"
+          className="text-sm md:text-base prose dark:prose-invert max-w-none prose-sm prose-p:my-1 prose-headings:my-2 prose-pre:my-1 prose-ul:my-1"
           dangerouslySetInnerHTML={{ 
             __html: isUser ? message.text : marked(message.text, { breaks: true }) 
           }}
         />
-        <div
-          className={classNames(
-            'text-xs mt-1',
-            isUser ? 'text-blue-100' : 'text-slate-400'
+        <div className="flex items-center justify-between mt-1">
+          <div
+            className={classNames(
+              'text-xs',
+              isUser ? 'text-blue-100' : 'text-slate-400'
+            )}
+          >
+            {format(new Date(message.timestamp), 'h:mm a')}
+          </div>
+          {!isUser && message.apiType && (
+            <div className="text-xs text-slate-400">
+              {message.apiType} {getModelName() && `• ${getModelName()}`}
+            </div>
           )}
-        >
-          {format(new Date(message.timestamp), 'h:mm a')}
         </div>
       </div>
     </div>

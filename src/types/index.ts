@@ -3,6 +3,7 @@ export interface Message {
   sender: 'user' | 'ai';
   text: string;
   timestamp: string;
+  apiType?: 'openai' | 'gemini';
 }
 
 export interface MCPServer {

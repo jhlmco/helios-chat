@@ -4,6 +4,14 @@ import { useSettingsStore } from '../../store/settingsStore';
 const AIModelSettings: React.FC = () => {
   const { aiModel, setAiModel } = useSettingsStore();
   
+  const handleModelChange = async (model: 'openai' | 'gemini') => {
+    try {
+      await setAiModel(model);
+    } catch (error) {
+      console.error('Error setting AI model:', error);
+    }
+  };
+  
   return (
     <div>
       <div className="mb-4">
@@ -16,7 +24,8 @@ const AIModelSettings: React.FC = () => {
         
         <div className="flex gap-4">
           <button
-            onClick={() => setAiModel('openai')}
+            type="button"
+            onClick={() => handleModelChange('openai')}
             className={`flex flex-col items-center p-4 rounded-lg border-2 transition-all ${
               aiModel === 'openai'
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
@@ -30,7 +39,8 @@ const AIModelSettings: React.FC = () => {
           </button>
           
           <button
-            onClick={() => setAiModel('gemini')}
+            type="button"
+            onClick={() => handleModelChange('gemini')}
             className={`flex flex-col items-center p-4 rounded-lg border-2 transition-all ${
               aiModel === 'gemini'
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'

@@ -2,12 +2,14 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send } from 'lucide-react';
 import { format } from 'date-fns';
 import { useMessageStore } from '../store/messageStore';
+import { useSettingsStore } from '../store/settingsStore';
 import MessageBubble from '../components/chat/MessageBubble';
 import TypingIndicator from '../components/chat/TypingIndicator';
 
 const ChatView: React.FC = () => {
   const [inputValue, setInputValue] = useState('');
   const { messages, isTyping, sendMessage } = useMessageStore();
+  const { aiModel, openai, gemini } = useSettingsStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
@@ -32,6 +34,13 @@ const ChatView: React.FC = () => {
     }
     messagesByDate[date].push(message);
   });
+
+  const getCurrentModel = () => {
+    if (aiModel === 'openai') {
+      return openai.model || 'No model selected';
+    }
+    return gemini.model || 'No model selected';
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -68,21 +77,28 @@ const ChatView: React.FC = () => {
       </div>
       
       <div className="p-4 border-t border-slate-700 bg-slate-900">
-        <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Type a message..."
-            className="flex-1 px-4 py-2 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-800 text-slate-200 placeholder-slate-400"
-          />
-          <button
-            type="submit"
-            className="p-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900"
-            disabled={inputValue.trim() === ''}
-          >
-            <Send className="w-5 h-5" />
-          </button>
+        <form onSubmit={handleSendMessage} className="flex flex-col space-y-2">
+          <div className="flex items-center space-x-2">
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              placeholder="Type a message..."
+              className="flex-1 px-4 py-2 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-800 text-slate-200 placeholder-slate-400"
+            />
+            <button
+              type="submit"
+              className="p-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+              disabled={inputValue.trim() === ''}
+            >
+              <Send className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="flex items-center justify-end space-x-2 text-xs text-slate-400">
+            <span className="font-medium">{aiModel.toUpperCase()}</span>
+            <span>•</span>
+            <span>{getCurrentModel()}</span>
+          </div>
         </form>
       </div>
     </div>

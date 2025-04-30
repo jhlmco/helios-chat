@@ -34,26 +34,43 @@ const defaultSettings: Settings = {
   mcpServers: [],
 };
 
+// Helper to check if we're running in Electron
+const isElectron = () => {
+  return window.electron !== undefined;
+};
+
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   ...defaultSettings,
   isLoading: true,
   initialized: false,
   
-  setTheme: (theme) => {
+  setTheme: async (theme) => {
+    if (isElectron()) {
+      await window.electron.setTheme(theme);
+    }
     set({ theme });
   },
   
-  setAiModel: (model) => {
+  setAiModel: async (model) => {
+    if (isElectron()) {
+      await window.electron.setAiModel(model);
+    }
     set({ aiModel: model });
   },
   
-  setOpenAIConfig: (config) => {
+  setOpenAIConfig: async (config) => {
+    if (isElectron()) {
+      await window.electron.setOpenAIConfig(config);
+    }
     set((state) => ({
       openai: { ...state.openai, ...config },
     }));
   },
   
-  setGeminiConfig: (config) => {
+  setGeminiConfig: async (config) => {
+    if (isElectron()) {
+      await window.electron.setGeminiConfig(config);
+    }
     set((state) => ({
       gemini: { ...state.gemini, ...config },
     }));
@@ -87,8 +104,27 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     }));
   },
   
-  loadSettings: () => {
-    set({ isLoading: false, initialized: true });
+  loadSettings: async () => {
+    try {
+      let settings = defaultSettings;
+      
+      if (isElectron()) {
+        settings = await window.electron.getSettings();
+      }
+      
+      set({ 
+        ...settings,
+        isLoading: false,
+        initialized: true 
+      });
+    } catch (error) {
+      console.error('Error loading settings:', error);
+      set({ 
+        ...defaultSettings,
+        isLoading: false,
+        initialized: true 
+      });
+    }
   },
 
   refreshOpenAIModels: async () => {
@@ -98,26 +134,23 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     }
 
     try {
-      const response = await fetch(`${state.openai.hostname}/models`, {
+      const response = await fetch('http://localhost:8080/models/openai', {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${state.openai.apiKey}`,
-        },
+          'Content-Type': 'application/json',
+        }
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch OpenAI models');
+        const errorData = await response.json().catch(() => ({ error: 'Network error' }));
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-      const models = data.data
-        .map((model: { id: string }) => model.id)
-        .sort();
-
       set((state) => ({
         openai: {
           ...state.openai,
-          availableModels: models,
+          availableModels: data.models,
         },
       }));
     } catch (error) {
@@ -133,35 +166,46 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     }
 
     try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1/models?key=${state.gemini.apiKey}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
+      // First, check if the backend is running
+      const checkBackend = async () => {
+        try {
+          const response = await fetch('http://localhost:8080/health');
+          if (!response.ok) {
+            throw new Error('Backend health check failed');
           }
+          return true;
+        } catch (error) {
+          throw new Error('Backend server is not running. Please ensure the Electron application is started and running on port 8080.');
         }
-      );
+      };
+
+      await checkBackend();
+
+      const response = await fetch('http://localhost:8080/models/gemini', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch Gemini models');
+        const errorData = await response.json().catch(() => ({ error: 'Network error' }));
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-      const models = data.models
-        .filter((model: any) => model.name.startsWith('models/gemini-'))
-        .map((model: any) => model.name.replace('models/', ''))
-        .sort();
-
       set((state) => ({
         gemini: {
           ...state.gemini,
-          availableModels: models,
+          availableModels: data.models,
         },
       }));
     } catch (error) {
       console.error('Error fetching Gemini models:', error);
-      throw error;
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      }
+      throw new Error('An unexpected error occurred while fetching Gemini models');
     }
   },
 }));

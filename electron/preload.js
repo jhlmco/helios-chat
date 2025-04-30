@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron';
+const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electron', {
   getSettings: () => ipcRenderer.invoke('get-settings'),
@@ -6,5 +6,6 @@ contextBridge.exposeInMainWorld('electron', {
   setAiModel: (model) => ipcRenderer.invoke('set-ai-model', model),
   setOpenAIConfig: (config) => ipcRenderer.invoke('set-openai-config', config),
   setGeminiConfig: (config) => ipcRenderer.invoke('set-gemini-config', config),
-  setMCPServers: (servers) => ipcRenderer.invoke('set-mcp-servers', servers)
+  setMCPServers: (servers) => ipcRenderer.invoke('set-mcp-servers', servers),
+  sendMessage: (message) => ipcRenderer.invoke('send-message', message)
 });
