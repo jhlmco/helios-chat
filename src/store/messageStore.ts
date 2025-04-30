@@ -23,20 +23,20 @@ export const useMessageStore = create<MessageState>((set, get) => ({
       timestamp: new Date().toISOString(),
       apiType,
     };
-    
+
     set((state) => ({
       messages: [...state.messages, newMessage],
     }));
   },
-  
+
   setIsTyping: (isTyping) => {
     set({ isTyping });
   },
-  
+
   sendMessage: async (text) => {
     const settings = useSettingsStore.getState();
     get().addMessage(text, 'user');
-    
+
     try {
       set({ isTyping: true });
       
