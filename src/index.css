@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: 59, 130, 246;
+  --color-accent: 139, 92, 246;
+  --color-success: 16, 185, 129;
+  --color-warning: 245, 158, 11;
+  --color-error: 239, 68, 68;
+}
+
+body {
+  @apply antialiased text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-900;
+  overflow: hidden;
+}
+
+.scrollbar-thin {
+  @apply scrollbar-track-transparent scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 dark:bg-slate-700 rounded-full;
+}
+
+/* Message animations */
+@keyframes messageIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-in {
+  animation: messageIn 0.3s ease-out forwards;
+}
+
+/* Typing indicator animation */
+@keyframes typing {
+  0% { transform: translateY(0px); }
+  28% { transform: translateY(-5px); }
+  44% { transform: translateY(0px); }
+}
+
+.typing-indicator div {
+  @apply bg-slate-500 dark:bg-slate-400 rounded-full h-2 w-2;
+  margin: 0 1px;
+  animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-indicator div:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.typing-indicator div:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator div:nth-child(3) {
+  animation-delay: 0.4s;
+}
