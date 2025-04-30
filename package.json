@@ -3,16 +3,20 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "electron:dev": "concurrently \"npm run dev\" \"electron .\"",
+    "electron:build": "npm run build && electron-builder"
   },
   "dependencies": {
     "@types/node": "^20.11.19",
     "classnames": "^2.5.1",
     "date-fns": "^3.3.1",
+    "electron-store": "^8.1.0",
     "lucide-react": "^0.344.0",
     "nanoid": "^5.0.4",
     "react": "^18.2.0",
@@ -27,6 +31,9 @@
     "@types/react-dom": "^18.2.19",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.17",
+    "concurrently": "^8.2.2",
+    "electron": "^28.2.3",
+    "electron-builder": "^24.9.1",
     "eslint": "^8.56.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
@@ -36,5 +43,25 @@
     "typescript": "^5.3.3",
     "typescript-eslint": "^7.0.2",
     "vite": "^5.1.4"
+  },
+  "build": {
+    "appId": "com.helios.app",
+    "productName": "Helios",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
   }
 }

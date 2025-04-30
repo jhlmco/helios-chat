@@ -1,28 +1,28 @@
-// Main process
 import { app, BrowserWindow, ipcMain } from 'electron';
 import { join } from 'path';
 import Store from 'electron-store';
 
-// Initialize the store for settings persistence
 const store = new Store({
   name: 'settings',
   defaults: {
-    theme: 'light',
+    theme: 'dark',
     aiModel: 'openai',
     openai: {
       hostname: 'https://api.openai.com/v1',
-      apiKey: ''
+      apiKey: '',
+      model: '',
+      availableModels: []
     },
     gemini: {
       apiKey: ''
-    }
+    },
+    mcpServers: []
   }
 });
 
 let mainWindow;
 
 const createWindow = () => {
-  // Create the browser window
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -35,7 +35,6 @@ const createWindow = () => {
     }
   });
 
-  // Load the app
   const isDev = !app.isPackaged;
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
@@ -44,13 +43,11 @@ const createWindow = () => {
     mainWindow.loadFile(join(__dirname, '../dist/index.html'));
   }
 
-  // Emitted when the window is closed
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
 };
 
-// This method will be called when Electron has finished initialization
 app.whenReady().then(() => {
   createWindow();
 
@@ -61,7 +58,6 @@ app.whenReady().then(() => {
   });
 });
 
-// Quit when all windows are closed, except on macOS
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
@@ -93,18 +89,7 @@ ipcMain.handle('set-gemini-config', (_, config) => {
   return config;
 });
 
-// IPC handler for messages (simulated response for now)
-ipcMain.handle('send-message', async (_, message) => {
-  // Simulate a delay for "processing" the message
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Return a simulated response based on the model
-  const aiModel = store.get('aiModel');
-  
-  return {
-    id: Date.now().toString(),
-    sender: 'ai',
-    text: `This is a simulated response from the ${aiModel} model. In a real implementation, this would use the API key to call the actual AI service.`,
-    timestamp: new Date().toISOString()
-  };
+ipcMain.handle('set-mcp-servers', (_, servers) => {
+  store.set('mcpServers', servers);
+  return servers;
 });

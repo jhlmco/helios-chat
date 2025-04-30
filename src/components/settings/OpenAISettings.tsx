@@ -24,8 +24,14 @@ const OpenAISettings: React.FC = () => {
   };
   
   const handleRefreshModels = async () => {
+    if (!apiKey || !hostname) {
+      setRefreshError('API key and hostname are required');
+      return;
+    }
+
     setIsRefreshing(true);
     setRefreshError(null);
+    
     try {
       await refreshOpenAIModels();
     } catch (error) {
@@ -118,7 +124,7 @@ const OpenAISettings: React.FC = () => {
             </label>
             <button
               onClick={handleRefreshModels}
-              disabled={isRefreshing || !apiKey}
+              disabled={isRefreshing || !apiKey || !hostname}
               className="flex items-center space-x-1 text-sm text-blue-400 hover:text-blue-300 disabled:text-slate-500 disabled:cursor-not-allowed"
             >
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
