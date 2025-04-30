@@ -50,6 +50,11 @@ export const useMessageStore = create<MessageState>((set, get) => ({
         const openai = new OpenAI({
           apiKey: settings.openai.apiKey,
           baseURL: settings.openai.hostname,
+          defaultHeaders: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-stainless-timeout'
+          }
         });
 
         const completion = await openai.chat.completions.create({
@@ -78,6 +83,9 @@ export const useMessageStore = create<MessageState>((set, get) => ({
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Methods': 'POST, OPTIONS',
+              'Access-Control-Allow-Headers': 'Content-Type, x-stainless-timeout'
             },
             body: JSON.stringify({
               contents: [{

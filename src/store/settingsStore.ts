@@ -102,6 +102,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       const openai = new OpenAI({
         apiKey: state.openai.apiKey,
         baseURL: state.openai.hostname,
+        defaultHeaders: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-stainless-timeout'
+        }
       });
 
       const response = await openai.models.list();
@@ -130,7 +135,16 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
     try {
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1/models?key=${state.gemini.apiKey}`
+        `https://generativelanguage.googleapis.com/v1/models?key=${state.gemini.apiKey}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-stainless-timeout'
+          }
+        }
       );
 
       if (!response.ok) {
