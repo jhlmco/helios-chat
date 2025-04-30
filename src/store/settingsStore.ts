@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { nanoid } from 'nanoid';
-import OpenAI from 'openai';
 import { Settings, MCPServer } from '../types';
 
 interface SettingsState extends Settings {
@@ -99,20 +98,20 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     }
 
     try {
-      const openai = new OpenAI({
-        apiKey: state.openai.apiKey,
-        baseURL: state.openai.hostname,
-        defaultHeaders: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-stainless-timeout'
-        }
+      const response = await fetch(`${state.openai.hostname}/models`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${state.openai.apiKey}`,
+        },
       });
 
-      const response = await openai.models.list();
-      
-      const models = response.data
-        .map(model => model.id)
+      if (!response.ok) {
+        throw new Error('Failed to fetch OpenAI models');
+      }
+
+      const data = await response.json();
+      const models = data.data
+        .map((model: { id: string }) => model.id)
         .sort();
 
       set((state) => ({
@@ -140,9 +139,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-stainless-timeout'
           }
         }
       );

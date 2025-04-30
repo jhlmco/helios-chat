@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { nanoid } from 'nanoid';
-import OpenAI from 'openai';
 import { useSettingsStore } from './settingsStore';
 import { Message } from '../types';
 
@@ -47,23 +46,26 @@ export const useMessageStore = create<MessageState>((set, get) => ({
           throw new Error('OpenAI API key and model must be configured in settings.');
         }
 
-        const openai = new OpenAI({
-          apiKey: settings.openai.apiKey,
-          baseURL: settings.openai.hostname,
-          defaultHeaders: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-stainless-timeout'
-          }
+        const response = await fetch(`${settings.openai.hostname}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${settings.openai.apiKey}`,
+          },
+          body: JSON.stringify({
+            model: settings.openai.model,
+            messages: [{ role: 'user', content: text }],
+            temperature: 0.7,
+          }),
         });
 
-        const completion = await openai.chat.completions.create({
-          model: settings.openai.model,
-          messages: [{ role: 'user', content: text }],
-          temperature: 0.7,
-        });
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error?.message || 'OpenAI API request failed');
+        }
 
-        aiResponse = completion.choices[0]?.message?.content;
+        const data = await response.json();
+        aiResponse = data.choices[0]?.message?.content;
         if (!aiResponse) {
           throw new Error('Invalid response from OpenAI');
         }
@@ -83,9 +85,6 @@ export const useMessageStore = create<MessageState>((set, get) => ({
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Access-Control-Allow-Origin': '*',
-              'Access-Control-Allow-Methods': 'POST, OPTIONS',
-              'Access-Control-Allow-Headers': 'Content-Type, x-stainless-timeout'
             },
             body: JSON.stringify({
               contents: [{
