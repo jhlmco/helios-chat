@@ -54,26 +54,49 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setAiModel: async (model) => {
     if (isElectron()) {
       await window.electron.setAiModel(model);
+      // After setting the AI model, we need to ensure the config is up to date
+      const settings = await window.electron.getSettings();
+      set((state) => ({
+        ...state,
+        aiModel: model,
+        openai: settings.openai,
+        gemini: settings.gemini
+      }));
+    } else {
+      set({ aiModel: model });
     }
-    set({ aiModel: model });
   },
   
   setOpenAIConfig: async (config) => {
     if (isElectron()) {
       await window.electron.setOpenAIConfig(config);
+      // After setting OpenAI config, refresh the entire settings
+      const settings = await window.electron.getSettings();
+      set((state) => ({
+        ...state,
+        openai: settings.openai
+      }));
+    } else {
+      set((state) => ({
+        openai: { ...state.openai, ...config },
+      }));
     }
-    set((state) => ({
-      openai: { ...state.openai, ...config },
-    }));
   },
   
   setGeminiConfig: async (config) => {
     if (isElectron()) {
       await window.electron.setGeminiConfig(config);
+      // After setting Gemini config, refresh the entire settings
+      const settings = await window.electron.getSettings();
+      set((state) => ({
+        ...state,
+        gemini: settings.gemini
+      }));
+    } else {
+      set((state) => ({
+        gemini: { ...state.gemini, ...config },
+      }));
     }
-    set((state) => ({
-      gemini: { ...state.gemini, ...config },
-    }));
   },
 
   addMCPServer: () => {

@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 import Store from 'electron-store';
 import yaml from 'js-yaml';
 import OpenAI from 'openai';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createServer } from 'http';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -118,9 +118,10 @@ const handleRequest = async (req, res) => {
             response: completion.choices[0]?.message?.content,
             apiType: 'openai'
           }));
-        } 
+        }
         else if (req.url === '/chat/gemini') {
-          const genAI = new GoogleGenAI(settings.gemini.apiKey);
+          const genAI = new GoogleGenerativeAI(settings.gemini.apiKey);
+          console.log('Gemini model being used:', settings.gemini.model); // Add logging here
           const model = genAI.getGenerativeModel({ model: settings.gemini.model });
 
           const result = await model.generateText(data.text);
